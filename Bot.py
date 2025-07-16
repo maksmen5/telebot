@@ -32,6 +32,11 @@ def webhook():
     bot.process_new_updates([update])
     return 'OK', 200
 
+@app.route('/wayforpay_callback', methods=['POST'])
+def wayforpay_callback():
+    # логіка обробки відповіді від WayForPay
+    return '', 200
+
 # Після оплати
 def handle_successful_payment(user_id, course_id):
     try:
