@@ -1,14 +1,17 @@
-# webhook_server.py
 from flask import Flask, request, jsonify
 import hmac
 import base64
 import hashlib
 import telebot
+import os
 
-from config import MERCHANT_SECRET_KEY, BOT_TOKEN, CHANNELS
+BOT_TOKEN = os.environ['BOT_TOKEN']
+MERCHANT_SECRET_KEY = os.environ['MERCHANT_SECRET_KEY']
+bot = telebot.TeleBot(BOT_TOKEN)
+
+from config import CHANNELS
 
 app = Flask(__name__)
-bot = telebot.TeleBot(BOT_TOKEN)
 
 
 def validate_signature(data, signature):
@@ -58,4 +61,6 @@ def home():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+0.0.0", port=5000)
