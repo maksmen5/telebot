@@ -116,4 +116,5 @@ def handle_successful_payment(user_id, course_id):
         bot.send_message(user_id, f"❌ Помилка видачі доступу:\n{e}")
         print(f"[ERROR] handle_successful_payment: {e}")
 
-bot.polling(none_stop=True)
+bot.remove_webhook()  # Видаляє старий вебхук
+bot.infinity_polling()
