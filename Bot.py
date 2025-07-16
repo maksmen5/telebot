@@ -126,5 +126,6 @@ def handle_successful_payment(user_id, course_id):
         print(f"[ERROR] handle_successful_payment: {e}")
 
 if __name__ == "__main__":
-    bot.remove_webhook()
+    bot.remove_webhook()  # Важливо!
     bot.infinity_polling()
+
