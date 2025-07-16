@@ -6,9 +6,31 @@ import base64
 from urllib.parse import urlencode
 import time
 from config import BOT_TOKEN, CHANNELS, COURSES
+from flask import Flask
+import threading
 
 
 bot = telebot.TeleBot(BOT_TOKEN)
+
+# Ініціалізація бота
+bot = telebot.TeleBot("YOUR_BOT_TOKEN")  # заміни на імпорт з os.environ, якщо треба
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return 'Bot is running!'
+
+def run_bot():
+    bot.polling(non_stop=True)
+
+if __name__ == '__main__':
+    # Запускаємо бота в окремому потоці
+    threading.Thread(target=run_bot).start()
+    # Запускаємо Flask
+    app.run(host='0.0.0.0', port=10000)
+
+
 
 bot.remove_webhook()
 
