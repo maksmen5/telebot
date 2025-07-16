@@ -5,30 +5,32 @@ import hashlib
 import base64
 from urllib.parse import urlencode
 import time
-from config import BOT_TOKEN, CHANNELS, COURSES
-from flask import Flask
-import threading
+import os
+from flask import Flask, request
+
+# Читаємо ключі з Environment Variables
+BOT_TOKEN = os.environ['BOT_TOKEN']
+MERCHANT_ACCOUNT = os.environ['MERCHANT_ACCOUNT']
+MERCHANT_SECRET_KEY = os.environ['MERCHANT_SECRET_KEY']
+
+# У config.py залиш тільки COURSES і CHANNELS або перенеси їх сюди
+from config import COURSES, CHANNELS
 
 bot = telebot.TeleBot(BOT_TOKEN)
-
 app = Flask(__name__)
 
+# Головна сторінка (для перевірки Render)
 @app.route('/')
 def home():
     return 'Bot is running!'
 
+# Webhook для отримання апдейтів від Telegram
 @app.route(f'/{BOT_TOKEN}', methods=['POST'])
-def receive_update():
-    json_str = flask.request.get_data().decode('utf-8')
+def webhook():
+    json_str = request.get_data().decode('utf-8')
     update = telebot.types.Update.de_json(json_str)
     bot.process_new_updates([update])
     return 'OK', 200
-
-if __name__ == '__main__':
-    bot.remove_webhook()
-    bot.set_webhook(url='https://https://telebot-zydo.onrender.com/' + BOT_TOKEN)  # URL твого Render проєкту
-    app.run(host='0.0.0.0', port=10000)
-
 
 # Після оплати
 def handle_successful_payment(user_id, course_id):
@@ -134,5 +136,9 @@ def handle_message(message):
         bot.send_message(chat_id, "❗️ Оберіть курс з меню.")
 
 if __name__ == '__main__':
-    threading.Thread(target=run_bot).start()
-    app.run(host='0.0.0.0', port=10000)
+    # Встановлюємо webhook для Telegram
+    bot.remove_webhook()
+    bot.set_webhook(url=f"https://your-render-app.onrender.com/{BOT_TOKEN}")  # заміни на свій URL
+
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)
