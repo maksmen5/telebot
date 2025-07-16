@@ -4,7 +4,7 @@ import hmac
 import hashlib
 import base64
 from urllib.parse import urlencode
-
+import time
 from config import BOT_TOKEN, CHANNELS, COURSES
 
 bot = telebot.TeleBot(BOT_TOKEN)
@@ -78,9 +78,18 @@ def handle_message(message):
                 "returnUrl": "https://t.me/your_bot"
             }
 
-            keys = [
-                MERCHANT_ACCOUNT, "test.com", order_ref, "1699999999",
-                str(course['price']), "UAH", course['name'], "1", str(course['price'])
+
+
+order_date = str(int(time.time()))
+data = {
+    ...
+    "orderDate": int(order_date),
+    ...
+}
+keys = [
+    MERCHANT_ACCOUNT, "test.com", order_ref, order_date,
+    str(course['price']), "UAH", course['name'], "1", str(course['price'])
+]
             ]
             sign_str = ";".join(keys)
             sign = base64.b64encode(hmac.new(MERCHANT_SECRET_KEY.encode(), sign_str.encode(), hashlib.md5).digest()).decode()
