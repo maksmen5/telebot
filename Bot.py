@@ -9,11 +9,7 @@ from config import BOT_TOKEN, CHANNELS, COURSES
 from flask import Flask
 import threading
 
-
 bot = telebot.TeleBot(BOT_TOKEN)
-
-# Ініціалізація бота
-bot = telebot.TeleBot("YOUR_BOT_TOKEN")  # заміни на імпорт з os.environ, якщо треба
 
 app = Flask(__name__)
 
@@ -22,31 +18,32 @@ def home():
     return 'Bot is running!'
 
 def run_bot():
-    bot.polling(non_stop=True)
+    bot.infinity_polling()
 
-if __name__ == '__main__':
-    # Запускаємо бота в окремому потоці
-    threading.Thread(target=run_bot).start()
-    # Запускаємо Flask
-    app.run(host='0.0.0.0', port=10000)
+# Після оплати
+def handle_successful_payment(user_id, course_id):
+    try:
+        chat_id = CHANNELS.get(course_id)
+        if not chat_id:
+            bot.send_message(user_id, "❌ Канал не знайдено для цього курсу.")
+            return
+        invite = bot.create_chat_invite_link(
+            chat_id=chat_id,
+            member_limit=1,
+            creates_join_request=False
+        )
+        bot.send_message(user_id, f"✅ Оплату підтверджено!\n🔗 Ось твоє посилання:\n{invite.invite_link}")
+    except Exception as e:
+        bot.send_message(user_id, f"❌ Помилка видачі доступу:\n{e}")
+        print(f"[ERROR] handle_successful_payment: {e}")
 
-
-
-bot.remove_webhook()
-
-bot.infinity_polling()
-
-MERCHANT_ACCOUNT = "7de8a72b71369907282f75c00bb050e8"
-MERCHANT_SECRET_KEY = "8600b023c86794b0496293e6b907aee895baa8e0"
-
-# Головне меню
+# Меню курсу
 def show_main_menu(chat_id):
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     buttons = [types.KeyboardButton(course['name']) for course in COURSES.values()]
     markup.add(*buttons)
     bot.send_message(chat_id, "👋 Обери курс:", reply_markup=markup)
 
-# Меню курсу
 def show_course_menu(chat_id, course_id):
     course = COURSES[course_id]
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
@@ -57,7 +54,6 @@ def show_course_menu(chat_id, course_id):
     )
     bot.send_message(chat_id, f"📘 {course['name']}", reply_markup=markup)
 
-# Стан користувача
 user_state = {}
 
 @bot.message_handler(commands=['start'])
@@ -70,23 +66,20 @@ def handle_message(message):
     chat_id = message.chat.id
     text = message.text
 
-    # Обирає курс
     for cid, course in COURSES.items():
         if text == course['name']:
             user_state[chat_id] = cid
             show_course_menu(chat_id, cid)
             return
 
-    # У меню курсу
     if chat_id in user_state:
         cid = user_state[chat_id]
+        course = COURSES[cid]
 
         if text == "ℹ️ Інформація":
-            course = COURSES[cid]
             bot.send_message(chat_id, f"*{course['name']}*\n\n{course['description']}", parse_mode="Markdown")
 
         elif text == "💳 Купити":
-            course = COURSES[cid]
             if course['price'] == 0:
                 handle_successful_payment(chat_id, cid)
                 return
@@ -130,23 +123,6 @@ def handle_message(message):
     else:
         bot.send_message(chat_id, "❗️ Оберіть курс з меню.")
 
-# Після оплати
-def handle_successful_payment(user_id, course_id):
-    try:
-        chat_id = CHANNELS.get(course_id)
-        if not chat_id:
-            bot.send_message(user_id, "❌ Канал не знайдено для цього курсу.")
-            return
-        invite = bot.create_chat_invite_link(
-            chat_id=chat_id,
-            member_limit=1,
-            creates_join_request=False
-        )
-        bot.send_message(user_id, f"✅ Оплату підтверджено!\n🔗 Ось твоє посилання:\n{invite.invite_link}")
-    except Exception as e:
-        bot.send_message(user_id, f"❌ Помилка видачі доступу:\n{e}")
-        print(f"[ERROR] handle_successful_payment: {e}")
-
-if __name__ == "__main__":
-    bot.remove_webhook()
-    bot.infinity_polling()
+if __name__ == '__main__':
+    threading.Thread(target=run_bot).start()
+    app.run(host='0.0.0.0', port=10000)
