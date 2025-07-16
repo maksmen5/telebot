@@ -138,7 +138,7 @@ def handle_message(message):
 if __name__ == '__main__':
     # Встановлюємо webhook для Telegram
     bot.remove_webhook()
-    bot.set_webhook(url=f"https://your-render-app.onrender.com/{BOT_TOKEN}")  # заміни на свій URL
+    bot.set_webhook(url='https://telebot-zydo.onrender.com/' + BOT_TOKEN)
 
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
