@@ -17,8 +17,18 @@ app = Flask(__name__)
 def home():
     return 'Bot is running!'
 
-def run_bot():
-    bot.infinity_polling()
+@app.route(f'/{BOT_TOKEN}', methods=['POST'])
+def receive_update():
+    json_str = flask.request.get_data().decode('utf-8')
+    update = telebot.types.Update.de_json(json_str)
+    bot.process_new_updates([update])
+    return 'OK', 200
+
+if __name__ == '__main__':
+    bot.remove_webhook()
+    bot.set_webhook(url='https://your-app-name.onrender.com/' + BOT_TOKEN)  # URL твого Render проєкту
+    app.run(host='0.0.0.0', port=10000)
+
 
 # Після оплати
 def handle_successful_payment(user_id, course_id):
