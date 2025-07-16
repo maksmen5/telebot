@@ -1,5 +1,11 @@
 # config.py
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+TOKEN = os.getenv("TOKEN")
+
 # 🔐 Дані бота
 BOT_TOKEN = "7915072837:AAEa8tNscTu-bPdQr0lpCBO68vaVkhiSBus"
 MERCHANT_ACCOUNT = "7de8a72b71369907282f75c00bb050e8"
