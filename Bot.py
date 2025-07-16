@@ -57,43 +57,44 @@ def handle_message(message):
         if text == "ℹ️ Інформація":
             course = COURSES[cid]
             bot.send_message(chat_id, f"*{course['name']}*\n\n{course['description']}", parse_mode="Markdown")
-        elif text == "💳 Купити":
-            course = COURSES[cid]
-            if course['price'] == 0:
-                handle_successful_payment(chat_id, cid)
-                return
+elif text == "💳 Купити":
+    course = COURSES[cid]
+    if course['price'] == 0:
+        handle_successful_payment(chat_id, cid)
+        return
 
-order_ref = f"order_{chat_id}_{cid}"
-order_date = str(int(time.time()))
+    order_ref = f"order_{chat_id}_{cid}"
+    order_date = str(int(time.time()))
 
-data = {
-    "merchantAccount": MERCHANT_ACCOUNT,
-    "merchantDomainName": "test.com",
-    "orderReference": order_ref,
-    "orderDate": int(order_date),
-    "amount": course['price'],
-    "currency": "UAH",
-    "productName": [course['name']],
-    "productCount": [1],
-    "productPrice": [course['price']],
-    "clientAccountId": str(chat_id),
-    "returnUrl": "https://t.me/your_bot"
-}
+    data = {
+        "merchantAccount": MERCHANT_ACCOUNT,
+        "merchantDomainName": "test.com",
+        "orderReference": order_ref,
+        "orderDate": int(order_date),
+        "amount": course['price'],
+        "currency": "UAH",
+        "productName": [course['name']],
+        "productCount": [1],
+        "productPrice": [course['price']],
+        "clientAccountId": str(chat_id),
+        "returnUrl": "https://t.me/your_bot"
+    }
 
-keys = [
-    MERCHANT_ACCOUNT, "test.com", order_ref, order_date,
-    str(course['price']), "UAH", course['name'], "1", str(course['price'])
-]
-sign_str = ";".join(keys)
-sign = base64.b64encode(
-    hmac.new(MERCHANT_SECRET_KEY.encode(), sign_str.encode(), hashlib.md5).digest()
-).decode()
-data['merchantSignature'] = sign
+    keys = [
+        MERCHANT_ACCOUNT, "test.com", order_ref, order_date,
+        str(course['price']), "UAH", course['name'], "1", str(course['price'])
+    ]
+    sign_str = ";".join(keys)
+    sign = base64.b64encode(
+        hmac.new(MERCHANT_SECRET_KEY.encode(), sign_str.encode(), hashlib.md5).digest()
+    ).decode()
+    data['merchantSignature'] = sign
 
-pay_link = "https://secure.wayforpay.com/pay?" + urlencode(data, doseq=True)
+    pay_link = "https://secure.wayforpay.com/pay?" + urlencode(data, doseq=True)
 
-bot.send_message(chat_id,
-    f"💳 Щоб купити {course['name']}, сплати {course['price']} грн:\n{pay_link}\n\nПісля оплати бот видасть доступ.")
+    bot.send_message(chat_id,
+        f"💳 Щоб купити {course['name']}, сплати {course['price']} грн:\n{pay_link}\n\nПісля оплати бот видасть доступ.")
+
 
         elif text == "⬅️ Назад":
             user_state.pop(chat_id, None)
