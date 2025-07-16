@@ -7,7 +7,12 @@ from urllib.parse import urlencode
 import time
 from config import BOT_TOKEN, CHANNELS, COURSES
 
+
 bot = telebot.TeleBot(BOT_TOKEN)
+
+bot.remove_webhook()
+
+bot.infinity_polling()
 
 MERCHANT_ACCOUNT = "7de8a72b71369907282f75c00bb050e8"
 MERCHANT_SECRET_KEY = "8600b023c86794b0496293e6b907aee895baa8e0"
