@@ -26,7 +26,7 @@ def receive_update():
 
 if __name__ == '__main__':
     bot.remove_webhook()
-    bot.set_webhook(url='https://your-app-name.onrender.com/' + BOT_TOKEN)  # URL твого Render проєкту
+    bot.set_webhook(url='https://https://telebot-zydo.onrender.com/' + BOT_TOKEN)  # URL твого Render проєкту
     app.run(host='0.0.0.0', port=10000)
 
 
