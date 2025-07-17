@@ -4,8 +4,6 @@ import telebot
 from telebot import types
 from config import BOT_TOKEN, CHANNELS, COURSES, ADMIN_CHAT_ID
 
-bot.delete_webhook()
-bot.set_webhook(url=WEBHOOK_URL)
 
 # --- Flask app + TeleBot ---
 app = Flask(__name__)
@@ -15,6 +13,8 @@ bot = telebot.TeleBot(BOT_TOKEN)
 WEBHOOK_HOST = os.environ.get("WEBHOOK_HOST", "https://telebot-zydo.onrender.com")  # заміни на свій домен Render
 WEBHOOK_PATH = f"/{BOT_TOKEN}/"
 WEBHOOK_URL = WEBHOOK_HOST + WEBHOOK_PATH
+bot.delete_webhook()
+bot.set_webhook(url=WEBHOOK_URL)
 
 user_state = {}  # Для збереження станів користувачів
 
