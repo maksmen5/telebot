@@ -68,7 +68,7 @@ elif text == "💳 Купити":
     )
 
 
-            )
+
 
         elif text == "⬅️ Назад":
             user_state.pop(chat_id, None)
