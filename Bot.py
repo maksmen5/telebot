@@ -1,22 +1,24 @@
+import os
+from flask import Flask, request
 import telebot
 from telebot import types
 from config import BOT_TOKEN, CHANNELS, COURSES
 
 bot = telebot.TeleBot(BOT_TOKEN)
+app = Flask(__name__)
 
 # Збереження поточного вибраного курсу для кожного користувача (в пам'яті)
 user_state = {}
 
-ADMIN_CHAT_ID = 123456789  # Заміни на свій Telegram ID (візьми через @userinfobot)
+ADMIN_CHAT_ID = 123456789  # Заміни на свій Telegram ID
 
-# Функція для показу головного меню з кнопками курсів
+# --- Функції меню (як в твоєму коді) ---
 def show_main_menu(chat_id):
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     buttons = [types.KeyboardButton(course['name']) for course in COURSES.values()]
     markup.add(*buttons)
     bot.send_message(chat_id, "👋 Обери курс:", reply_markup=markup)
 
-# Функція показу меню курсу з кнопками: Інформація, Купити, Назад
 def show_course_menu(chat_id, course_id):
     course = COURSES[course_id]
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
@@ -27,6 +29,23 @@ def show_course_menu(chat_id, course_id):
     )
     bot.send_message(chat_id, f"📘 {course['name']}", reply_markup=markup)
 
+def handle_successful_payment(user_id, course_id):
+    try:
+        chat_id = CHANNELS.get(course_id)
+        if not chat_id:
+            bot.send_message(user_id, "❌ Канал не знайдено для цього курсу.")
+            return
+        invite = bot.create_chat_invite_link(
+            chat_id=chat_id,
+            member_limit=1,
+            creates_join_request=False
+        )
+        bot.send_message(user_id, f"✅ Оплату підтверджено!\n🔗 Ось твоє посилання:\n{invite.invite_link}")
+    except Exception as e:
+        bot.send_message(user_id, f"❌ Помилка видачі доступу:\n{e}")
+        print(f"[ERROR] handle_successful_payment: {e}")
+
+# --- Обробка повідомлень ---
 @bot.message_handler(commands=['start'])
 def start(message):
     user_state.pop(message.chat.id, None)
@@ -37,14 +56,12 @@ def handle_message(message):
     chat_id = message.chat.id
     text = message.text
 
-    # Обробка вибору курсу з головного меню
     for cid, course in COURSES.items():
         if text == course['name']:
             user_state[chat_id] = cid
             show_course_menu(chat_id, cid)
             return
 
-    # Обробка дій у меню курсу
     if chat_id in user_state:
         cid = user_state[chat_id]
         course = COURSES[cid]
@@ -125,24 +142,25 @@ def revoke_access(message):
     except Exception as e:
         bot.reply_to(message, f"❌ Помилка при видаленні доступу: {e}")
 
-# Функція видачі посилання після оплати
-def handle_successful_payment(user_id, course_id):
-    try:
-        chat_id = CHANNELS.get(course_id)
-        if not chat_id:
-            bot.send_message(user_id, "❌ Канал не знайдено для цього курсу.")
-            return
-        invite = bot.create_chat_invite_link(
-            chat_id=chat_id,
-            member_limit=1,
-            creates_join_request=False
-        )
-        bot.send_message(user_id, f"✅ Оплату підтверджено!\n🔗 Ось твоє посилання:\n{invite.invite_link}")
-    except Exception as e:
-        bot.send_message(user_id, f"❌ Помилка видачі доступу:\n{e}")
-        print(f"[ERROR] handle_successful_payment: {e}")
+# --- Flask webhook endpoint ---
+
+WEBHOOK_URL_BASE = "https://yourdomain.com"  # Замінити на свій HTTPS URL
+WEBHOOK_URL_PATH = f"/{BOT_TOKEN}/"
+
+@app.route(WEBHOOK_URL_PATH, methods=["POST"])
+def webhook():
+    json_str = request.get_data().decode("utf-8")
+    update = telebot.types.Update.de_json(json_str)
+    bot.process_new_updates([update])
+    return "", 200
+
+@app.route("/", methods=["GET"])
+def index():
+    return "Бот працює"
 
 if __name__ == "__main__":
-    bot.remove_webhook()  # Видаляємо webhook перед polling
-    print("Бот запущено...")
-    bot.polling(none_stop=True)
+    # Встановлюємо webhook
+    bot.remove_webhook()
+    bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH)
+    print("Webhook встановлено. Сервер запущено.")
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
