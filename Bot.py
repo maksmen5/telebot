@@ -7,14 +7,16 @@ bot = telebot.TeleBot(BOT_TOKEN)
 # Збереження поточного вибраного курсу для кожного користувача (в пам'яті)
 user_state = {}
 
-ADMIN_CHAT_ID = 123456789  # Замініть на свій Telegram ID
+ADMIN_CHAT_ID = 123456789  # Заміни на свій Telegram ID (візьми через @userinfobot)
 
+# Функція для показу головного меню з кнопками курсів
 def show_main_menu(chat_id):
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     buttons = [types.KeyboardButton(course['name']) for course in COURSES.values()]
     markup.add(*buttons)
     bot.send_message(chat_id, "👋 Обери курс:", reply_markup=markup)
 
+# Функція показу меню курсу з кнопками: Інформація, Купити, Назад
 def show_course_menu(chat_id, course_id):
     course = COURSES[course_id]
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
@@ -35,12 +37,14 @@ def handle_message(message):
     chat_id = message.chat.id
     text = message.text
 
+    # Обробка вибору курсу з головного меню
     for cid, course in COURSES.items():
         if text == course['name']:
             user_state[chat_id] = cid
             show_course_menu(chat_id, cid)
             return
 
+    # Обробка дій у меню курсу
     if chat_id in user_state:
         cid = user_state[chat_id]
         course = COURSES[cid]
@@ -55,10 +59,10 @@ def handle_message(message):
 
             markup = types.InlineKeyboardMarkup()
             markup.add(types.InlineKeyboardButton("✅ Я оплатив", callback_data=f"confirm_payment:{cid}"))
-            
+
             bot.send_message(
                 chat_id,
-                f"""💳 Сплати *{course['price']} грн* на карту:`4441 1144 2233 4455`
+                f"""💳 Сплати *{course['price']} грн* на карту: `4441 1144 2233 4455`
 
 Після оплати натисни кнопку нижче.""",
                 parse_mode="Markdown",
@@ -85,7 +89,7 @@ def confirm_payment_callback(call):
         f"Користувач: @{user.username or 'немає'}\n"
         f"ID: {user.id}\n"
         f"Курс: {COURSES[cid]['name']}\n"
-        f"Сума: {COURSES[cid]['price']}\n\n"
+        f"Сума: {COURSES[cid]['price']}\n"
         f"Підтвердити: /confirm_{user.id}_{cid}"
     )
 
@@ -96,7 +100,7 @@ def confirm_payment_callback(call):
 def confirm_payment_command(message):
     parts = message.text.split("_")
     if len(parts) != 3:
-        bot.reply_to(message, "❌ Невірний формат команди.\nВикористання: /confirm_USERID_COURSEID")
+        bot.reply_to(message, "❌ Невірний формат команди.")
         return
 
     user_id, course_id = parts[1], parts[2]
@@ -110,17 +114,18 @@ def confirm_payment_command(message):
 def revoke_access(message):
     parts = message.text.split("_")
     if len(parts) != 3:
-        bot.reply_to(message, "❌ Невірний формат команди.\nВикористання: /revoke_USERID_COURSEID")
+        bot.reply_to(message, "❌ Невірний формат команди. Використовуй /revoke_USERID_COURSEID")
         return
 
     user_id, course_id = parts[1], parts[2]
     try:
         bot.ban_chat_member(chat_id=CHANNELS[course_id], user_id=int(user_id))
         bot.unban_chat_member(chat_id=CHANNELS[course_id], user_id=int(user_id))
-        bot.reply_to(message, f"🚫 Доступ до курсу '{COURSES[course_id]['name']}' для користувача {user_id} скасовано.")
+        bot.reply_to(message, f"🚫 Доступ до курсу {course_id} для користувача {user_id} скасовано.")
     except Exception as e:
         bot.reply_to(message, f"❌ Помилка при видаленні доступу: {e}")
 
+# Функція видачі посилання після оплати
 def handle_successful_payment(user_id, course_id):
     try:
         chat_id = CHANNELS.get(course_id)
@@ -133,12 +138,11 @@ def handle_successful_payment(user_id, course_id):
             creates_join_request=False
         )
         bot.send_message(user_id, f"✅ Оплату підтверджено!\n🔗 Ось твоє посилання:\n{invite.invite_link}")
-        # Очистити стан користувача після видачі
-        user_state.pop(user_id, None)
     except Exception as e:
         bot.send_message(user_id, f"❌ Помилка видачі доступу:\n{e}")
         print(f"[ERROR] handle_successful_payment: {e}")
 
 if __name__ == "__main__":
+    bot.remove_webhook()  # Відключаємо webhook, щоб не було конфлікту з polling
     print("Бот запущено...")
     bot.polling(none_stop=True)
