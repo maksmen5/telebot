@@ -144,4 +144,5 @@ def handle_successful_payment(user_id, course_id):
 
 if __name__ == "__main__":
     print("Бот запущено...")
+    bot.remove_webhook()
     bot.polling(none_stop=True)
