@@ -144,8 +144,8 @@ def revoke_access(message):
 
 # --- Flask webhook endpoint ---
 
-WEBHOOK_URL_BASE = "https://yourdomain.com"  # Замінити на свій HTTPS URL
-WEBHOOK_URL_PATH = f"/{BOT_TOKEN}/"
+WEBHOOK_URL_BASE = https://telebot-zydo.onrender.com  # Замінити на свій HTTPS URL
+WEBHOOK_URL_PATH = f"/{7915072837:AAEa8tNscTu-bPdQr0lpCBO68vaVkhiSBus}/"
 
 @app.route(WEBHOOK_URL_PATH, methods=["POST"])
 def webhook():
