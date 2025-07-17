@@ -1,1 +1,1 @@
-python Bot.py
+web: python webhook_server.py
