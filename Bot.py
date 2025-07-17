@@ -160,7 +160,6 @@ def index():
 
 if __name__ == "__main__":
     # Встановлюємо webhook
-    bot.remove_webhook()
     bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH)
     print("Webhook встановлено. Сервер запущено.")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
