@@ -68,12 +68,6 @@ bot.send_message(
     reply_markup=markup
 )
 
-
-Після оплати натисни кнопку нижче.""",
-    parse_mode="Markdown",
-    reply_markup=markup
-)
-
                 parse_mode="Markdown",
                 reply_markup=markup
             )
