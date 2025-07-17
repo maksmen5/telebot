@@ -4,6 +4,8 @@ import telebot
 from telebot import types
 from config import BOT_TOKEN, CHANNELS, COURSES, ADMIN_CHAT_ID
 
+bot.remove_webhook()
+
 # --- Flask app + TeleBot ---
 app = Flask(__name__)
 bot = telebot.TeleBot(BOT_TOKEN)
