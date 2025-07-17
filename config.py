@@ -4,12 +4,13 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-TOKEN = os.getenv("TOKEN")
-
 # 🔐 Дані бота
 BOT_TOKEN = "7915072837:AAEa8tNscTu-bPdQr0lpCBO68vaVkhiSBus"
 MERCHANT_ACCOUNT = "7de8a72b71369907282f75c00bb050e8"
 MERCHANT_SECRET_KEY = "8600b023c86794b0496293e6b907aee895baa8e0"
+
+# 👮‍♂️ ID адміна для підтвердження оплат
+ADMIN_CHAT_ID = 123456789  # 🔁 Заміни на свій ID з @userinfobot
 
 # 📦 Курси
 COURSES = {
