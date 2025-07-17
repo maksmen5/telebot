@@ -2,18 +2,17 @@ import os
 from flask import Flask, request
 import telebot
 from telebot import types
-from config import BOT_TOKEN, CHANNELS, COURSES
+from config import BOT_TOKEN, CHANNELS, COURSES, ADMIN_CHAT_ID
 
 # --- Flask app + TeleBot ---
 app = Flask(__name__)
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # --- Константи ---
-WEBHOOK_HOST = https://telebot-zydo.onrender.com  # Замінити на свій домен Render
+WEBHOOK_HOST = os.environ.get("WEBHOOK_HOST", "https://telebot-zydo.onrender.com")  # заміни на свій домен Render
 WEBHOOK_PATH = f"/{BOT_TOKEN}/"
 WEBHOOK_URL = WEBHOOK_HOST + WEBHOOK_PATH
 
-ADMIN_CHAT_ID = Id: 1384804489  # Замінити на свій Telegram ID
 user_state = {}  # Для збереження станів користувачів
 
 # --- Меню ---
@@ -119,36 +118,6 @@ def confirm_payment_callback(call):
 
     bot.answer_callback_query(call.id, "Заявка надіслана. Очікуй підтвердження.")
     bot.send_message(chat_id, "🔄 Очікуємо підтвердження оплати. Це може зайняти до 10 хвилин.")
-
-# --- Команди для адміна ---
-@bot.message_handler(commands=['confirm'])
-def confirm_payment_command(message):
-    parts = message.text.split("_")
-    if len(parts) != 3:
-        bot.reply_to(message, "❌ Невірний формат команди.")
-        return
-
-    user_id, course_id = parts[1], parts[2]
-    try:
-        handle_successful_payment(int(user_id), course_id)
-        bot.reply_to(message, "✅ Доступ видано.")
-    except Exception as e:
-        bot.reply_to(message, f"❌ Помилка: {e}")
-
-@bot.message_handler(commands=['revoke'])
-def revoke_access(message):
-    parts = message.text.split("_")
-    if len(parts) != 3:
-        bot.reply_to(message, "❌ Невірний формат команди. Використовуй /revoke_USERID_COURSEID")
-        return
-
-    user_id, course_id = parts[1], parts[2]
-    try:
-        bot.ban_chat_member(chat_id=CHANNELS[course_id], user_id=int(user_id))
-        bot.unban_chat_member(chat_id=CHANNELS[course_id], user_id=int(user_id))
-        bot.reply_to(message, f"🚫 Доступ до курсу {course_id} для користувача {user_id} скасовано.")
-    except Exception as e:
-        bot.reply_to(message, f"❌ Помилка при видаленні доступу: {e}")
 
 # --- Flask Webhook ---
 @app.route(WEBHOOK_PATH, methods=['POST'])
