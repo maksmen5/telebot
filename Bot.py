@@ -7,16 +7,14 @@ bot = telebot.TeleBot(BOT_TOKEN)
 # Збереження поточного вибраного курсу для кожного користувача (в пам'яті)
 user_state = {}
 
-ADMIN_CHAT_ID = 123456789  # Заміни на свій Telegram ID (візьми через @userinfobot)
+ADMIN_CHAT_ID = 123456789  # Замініть на свій Telegram ID
 
-# Функція для показу головного меню з кнопками курсів
 def show_main_menu(chat_id):
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     buttons = [types.KeyboardButton(course['name']) for course in COURSES.values()]
     markup.add(*buttons)
     bot.send_message(chat_id, "👋 Обери курс:", reply_markup=markup)
 
-# Функція показу меню курсу з кнопками: Інформація, Купити, Назад
 def show_course_menu(chat_id, course_id):
     course = COURSES[course_id]
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
@@ -50,25 +48,22 @@ def handle_message(message):
         if text == "ℹ️ Інформація":
             bot.send_message(chat_id, f"*{course['name']}*\n\n{course['description']}", parse_mode="Markdown")
 
-elif text == "💳 Купити":
-    if course['price'] == 0:
-        handle_successful_payment(chat_id, cid)
-        return
+        elif text == "💳 Купити":
+            if course['price'] == 0:
+                handle_successful_payment(chat_id, cid)
+                return
 
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("✅ Я оплатив", callback_data=f"confirm_payment:{cid}"))
-
-    bot.send_message(
-        chat_id,
-        f"""💳 Сплати *{course['price']} грн* на карту:`4441 1144 2233 4455`
+            markup = types.InlineKeyboardMarkup()
+            markup.add(types.InlineKeyboardButton("✅ Я оплатив", callback_data=f"confirm_payment:{cid}"))
+            
+            bot.send_message(
+                chat_id,
+                f"""💳 Сплати *{course['price']} грн* на карту:`4441 1144 2233 4455`
 
 Після оплати натисни кнопку нижче.""",
-        parse_mode="Markdown",
-        reply_markup=markup
-    )
-
-
-
+                parse_mode="Markdown",
+                reply_markup=markup
+            )
 
         elif text == "⬅️ Назад":
             user_state.pop(chat_id, None)
@@ -86,9 +81,12 @@ def confirm_payment_callback(call):
 
     bot.send_message(
         ADMIN_CHAT_ID,
-        f"📝 Заявка на оплату\n
-Користувач: @{user.username or 'немає'}\nID: {user.id}\nКурс: {COURSES[cid]['name']}\nСума: {COURSES[cid]['price']}\n
-Підтвердити: /confirm_{user.id}_{cid}"
+        f"📝 Заявка на оплату\n"
+        f"Користувач: @{user.username or 'немає'}\n"
+        f"ID: {user.id}\n"
+        f"Курс: {COURSES[cid]['name']}\n"
+        f"Сума: {COURSES[cid]['price']}\n\n"
+        f"Підтвердити: /confirm_{user.id}_{cid}"
     )
 
     bot.answer_callback_query(call.id, "Заявка надіслана. Очікуй підтвердження.")
@@ -98,7 +96,7 @@ def confirm_payment_callback(call):
 def confirm_payment_command(message):
     parts = message.text.split("_")
     if len(parts) != 3:
-        bot.reply_to(message, "❌ Невірний формат команди.")
+        bot.reply_to(message, "❌ Невірний формат команди.\nВикористання: /confirm_USERID_COURSEID")
         return
 
     user_id, course_id = parts[1], parts[2]
@@ -112,18 +110,17 @@ def confirm_payment_command(message):
 def revoke_access(message):
     parts = message.text.split("_")
     if len(parts) != 3:
-        bot.reply_to(message, "❌ Невірний формат команди. Використовуй /revoke_USERID_COURSEID")
+        bot.reply_to(message, "❌ Невірний формат команди.\nВикористання: /revoke_USERID_COURSEID")
         return
 
     user_id, course_id = parts[1], parts[2]
     try:
         bot.ban_chat_member(chat_id=CHANNELS[course_id], user_id=int(user_id))
         bot.unban_chat_member(chat_id=CHANNELS[course_id], user_id=int(user_id))
-        bot.reply_to(message, f"🚫 Доступ до курсу {course_id} для користувача {user_id} скасовано.")
+        bot.reply_to(message, f"🚫 Доступ до курсу '{COURSES[course_id]['name']}' для користувача {user_id} скасовано.")
     except Exception as e:
         bot.reply_to(message, f"❌ Помилка при видаленні доступу: {e}")
 
-# Функція видачі посилання після оплати
 def handle_successful_payment(user_id, course_id):
     try:
         chat_id = CHANNELS.get(course_id)
@@ -136,8 +133,12 @@ def handle_successful_payment(user_id, course_id):
             creates_join_request=False
         )
         bot.send_message(user_id, f"✅ Оплату підтверджено!\n🔗 Ось твоє посилання:\n{invite.invite_link}")
+        # Очистити стан користувача після видачі
+        user_state.pop(user_id, None)
     except Exception as e:
         bot.send_message(user_id, f"❌ Помилка видачі доступу:\n{e}")
         print(f"[ERROR] handle_successful_payment: {e}")
 
-bot.polling(none_stop=True)
+if __name__ == "__main__":
+    print("Бот запущено...")
+    bot.polling(none_stop=True)
