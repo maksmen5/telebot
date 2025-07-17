@@ -3,6 +3,10 @@ from flask import Flask, request
 import telebot
 from telebot import types
 from config import BOT_TOKEN, CHANNELS, COURSES
+import requests
+
+res = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/setWebhook", params={"url": WEBHOOK_URL})
+print(res.json())
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
