@@ -2,6 +2,8 @@ import telebot
 from telebot import types
 from config import BOT_TOKEN, CHANNELS, COURSES
 
+bot.remove_webhook()
+
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # Збереження поточного вибраного курсу для кожного користувача (в пам'яті)
