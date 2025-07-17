@@ -50,24 +50,23 @@ def handle_message(message):
         if text == "ℹ️ Інформація":
             bot.send_message(chat_id, f"*{course['name']}*\n\n{course['description']}", parse_mode="Markdown")
 
-        elif text == "💳 Купити":
-            if course['price'] == 0:
-                handle_successful_payment(chat_id, cid)
-                return
+elif text == "💳 Купити":
+    if course['price'] == 0:
+        handle_successful_payment(chat_id, cid)
+        return
 
-            markup = types.InlineKeyboardMarkup()
-            markup.add(types.InlineKeyboardButton("✅ Я оплатив", callback_data=f"confirm_payment:{cid}"))
-            bot.send_message(
-                chat_id,
-                
-bot.send_message(
-    chat_id,
-    f"""💳 Сплати *{course['price']} грн* на карту:`4441 1144 2233 4455`
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("✅ Я оплатив", callback_data=f"confirm_payment:{cid}"))
+
+    bot.send_message(
+        chat_id,
+        f"""💳 Сплати *{course['price']} грн* на карту:`4441 1144 2233 4455`
 
 Після оплати натисни кнопку нижче.""",
-    parse_mode="Markdown",
-    reply_markup=markup
-)
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
+
 
             )
 
