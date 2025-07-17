@@ -143,6 +143,6 @@ def handle_successful_payment(user_id, course_id):
         print(f"[ERROR] handle_successful_payment: {e}")
 
 if __name__ == "__main__":
-    bot.remove_webhook()  # Відключаємо webhook, щоб не було конфлікту з polling
+    bot.remove_webhook()  # Видаляємо webhook перед polling
     print("Бот запущено...")
     bot.polling(none_stop=True)
