@@ -3,20 +3,20 @@ from flask import Flask, request
 import telebot
 from telebot import types
 from config import BOT_TOKEN, CHANNELS, COURSES
-import requests
 
-res = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/setWebhook", params={"url": WEBHOOK_URL})
-print(res.json())
-
-bot = telebot.TeleBot(BOT_TOKEN)
+# --- Flask app + TeleBot ---
 app = Flask(__name__)
+bot = telebot.TeleBot(BOT_TOKEN)
 
-# Збереження поточного вибраного курсу для кожного користувача (в пам'яті)
-user_state = {}
+# --- Константи ---
+WEBHOOK_HOST = https://telebot-zydo.onrender.com  # Замінити на свій домен Render
+WEBHOOK_PATH = f"/{BOT_TOKEN}/"
+WEBHOOK_URL = WEBHOOK_HOST + WEBHOOK_PATH
 
-ADMIN_CHAT_ID = 123456789  # Заміни на свій Telegram ID
+ADMIN_CHAT_ID = Id: 1384804489  # Замінити на свій Telegram ID
+user_state = {}  # Для збереження станів користувачів
 
-# --- Функції меню (як в твоєму коді) ---
+# --- Меню ---
 def show_main_menu(chat_id):
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     buttons = [types.KeyboardButton(course['name']) for course in COURSES.values()]
@@ -33,6 +33,7 @@ def show_course_menu(chat_id, course_id):
     )
     bot.send_message(chat_id, f"📘 {course['name']}", reply_markup=markup)
 
+# --- Логіка оплати ---
 def handle_successful_payment(user_id, course_id):
     try:
         chat_id = CHANNELS.get(course_id)
@@ -60,12 +61,14 @@ def handle_message(message):
     chat_id = message.chat.id
     text = message.text
 
+    # Перехід на меню курсу
     for cid, course in COURSES.items():
         if text == course['name']:
             user_state[chat_id] = cid
             show_course_menu(chat_id, cid)
             return
 
+    # Взаємодія в меню курсу
     if chat_id in user_state:
         cid = user_state[chat_id]
         course = COURSES[cid]
@@ -80,7 +83,6 @@ def handle_message(message):
 
             markup = types.InlineKeyboardMarkup()
             markup.add(types.InlineKeyboardButton("✅ Я оплатив", callback_data=f"confirm_payment:{cid}"))
-
             bot.send_message(
                 chat_id,
                 f"""💳 Сплати *{course['price']} грн* на карту: `4441 1144 2233 4455`
@@ -98,6 +100,7 @@ def handle_message(message):
     else:
         bot.send_message(chat_id, "❗️ Оберіть курс з меню.")
 
+# --- Підтвердження оплати ---
 @bot.callback_query_handler(func=lambda call: call.data.startswith("confirm_payment"))
 def confirm_payment_callback(call):
     cid = call.data.split(":")[1]
@@ -117,6 +120,7 @@ def confirm_payment_callback(call):
     bot.answer_callback_query(call.id, "Заявка надіслана. Очікуй підтвердження.")
     bot.send_message(chat_id, "🔄 Очікуємо підтвердження оплати. Це може зайняти до 10 хвилин.")
 
+# --- Команди для адміна ---
 @bot.message_handler(commands=['confirm'])
 def confirm_payment_command(message):
     parts = message.text.split("_")
@@ -146,25 +150,20 @@ def revoke_access(message):
     except Exception as e:
         bot.reply_to(message, f"❌ Помилка при видаленні доступу: {e}")
 
-# --- Flask webhook endpoint ---
-
-WEBHOOK_URL_BASE = "https://telebot-zydo.onrender.com"  # Замінити на свій HTTPS URL
-WEBHOOK_URL_PATH = f"/{BOT_TOKEN}/"
-
-@app.route(WEBHOOK_URL_PATH, methods=["POST"])
+# --- Flask Webhook ---
+@app.route(WEBHOOK_PATH, methods=['POST'])
 def webhook():
-    json_str = request.get_data().decode("utf-8")
-    update = telebot.types.Update.de_json(json_str)
+    update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
     bot.process_new_updates([update])
-    return "", 200
+    return "OK", 200
 
-@app.route("/", methods=["GET"])
+@app.route("/", methods=['GET'])
 def index():
-    return "Бот працює"
+    return "✅ Бот працює", 200
 
+# --- Запуск ---
 if __name__ == "__main__":
-    # Знімаємо попередній webhook і ставимо новий
     bot.remove_webhook()
-    bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH)
-    print("Webhook встановлено. Сервер запущено.")
+    bot.set_webhook(url=WEBHOOK_URL)
+    print(f"🌐 Webhook встановлено на {WEBHOOK_URL}")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
